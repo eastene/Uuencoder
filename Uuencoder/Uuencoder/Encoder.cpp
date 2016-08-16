@@ -1,6 +1,7 @@
 #include "Encoder.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 // Encoder default constructor
 // @params: none
@@ -11,17 +12,14 @@ Encoder::Encoder() {};
 // @method: reads .txt file of specified name and returns the contents as a string or throws exception if file not found
 // @params: input - file name
 // @return: contents of file as string
-std::string Encoder::readFile(std::string input) {
-	std::string contents = "";
-	std::string temp;
+std::stringstream Encoder::readFile(std::stringstream input) {
+	std::stringstream contents;
 	std::fstream reader;
 	try {
 		reader.open(input.c_str(), std::ios::in);
 
-		while (!reader.eof()) {
-			std::getline(reader, temp);
-			contents += temp;
-		}
+        contents << reader.rdbuf();
+
 		reader.close();
 
 	} catch (std::fstream::failure e){
@@ -37,12 +35,12 @@ std::string Encoder::readFile(std::string input) {
 // @method: writes binary contents to end of output file, err if exception caught
 // @params: output - file to write to, contents - text to append to file
 // @return: none
-void Encoder::appendFile(std::string output, std::string contents) {
+void Encoder::appendFile(std::string output, std::stringstream contents) {
     std::fstream appender;
     try{
-        appender.open(output.c_str(), std::ios::out | std::ios::binary | std::ios::app);
+        appender.open(output.c_str(), std::ios::out | std::ios::app);
 
-        appender.write(contents.c_str(), sizeof(char) * contents.length());
+        appender << contents;
 
         appender.close();
     } catch (std::fstream::failure e){
@@ -70,7 +68,9 @@ void Encoder::clearFile(std::string file) {
 // @method: encodes the contents of a file using uuencoding
 // @params: contents - text to be encoded
 // @return: string of encoded text
-std::string Encoder::uuencoder(std::string contents) {
+std::stringstream Encoder::uuencoder(std::stringstream contents) {
+    // probably not the fastest way to do this but will use this conversion for now
+    std::string in = contents.rdbuf();
     // number of bytes in the line
     int byte_count = 0;
     // 4-byte encoding
@@ -81,19 +81,19 @@ std::string Encoder::uuencoder(std::string contents) {
     std::string out;
 
     // size contents to be divisible by 3 with padding 0's if necessary
-    if (contents.length() % 3 == 1){
-        contents += "0";
+    if (in.length() % 3 == 1){
+        in += "0";
     }
-    else if (contents.length() % 3 == 2){
-        contents += "00";
+    else if (in.length() % 3 == 2){
+        in += "00";
     }
 
-    for (int i = 0; i < contents.length(); i += 3){
+    for (int i = 0; i < in.length(); i += 3){
         // take 3 characters at a time, make 4 6-bit words and add 32 to each
-        bytes[0] = (char) ((contents[i] & 0b11111100) >> 2) + 32;
-        bytes[1] = (char) (((contents[i] & 0b00000011) << 4) | ((contents[i + 1] & 0b11110000) >> 4)) + 32;
-        bytes[2] = (char) (((contents[i + 1] & 0b00001111) << 2) | ((contents[i + 2] & 0b11000000) >> 6)) + 32;
-        bytes[3] = (char) (contents[i + 2] & 0b00111111) + 32;
+        bytes[0] = (char) ((in[i] & 0b11111100) >> 2) + 32;
+        bytes[1] = (char) (((in[i] & 0b00000011) << 4) | ((in[i + 1] & 0b11110000) >> 4)) + 32;
+        bytes[2] = (char) (((in[i + 1] & 0b00001111) << 2) | ((in[i + 2] & 0b11000000) >> 6)) + 32;
+        bytes[3] = (char) (in[i + 2] & 0b00111111) + 32;
         // add 4 to the total amount of bytes in the row
         byte_count += 3;
         // add bytes the the current line
@@ -117,7 +117,8 @@ std::string Encoder::uuencoder(std::string contents) {
         out += "\n";
     }
 
-    return out;
+    contents << out;
+    return contents;
 }
 
 // Encoder main encode
@@ -127,22 +128,22 @@ std::string Encoder::uuencoder(std::string contents) {
 // @return: none
 void Encoder::encode(std::string input, std::string output) {
 	// read in input contents first in case outputting to input file
-	std::string contents = Encoder::readFile(input);
+	std::stringstream contents = Encoder::readFile(input);
 
     // clear contents of output since appendFile will not
     Encoder::clearFile(output);
 
 	// add header to output
-    std::string header = "begin 644 ";
-    header += input;
-    header += "\n";
+    std::stringstream header;
+    header << "begin 644 " << input << "\n";
     Encoder::appendFile(output, header);
 
 	// encode text and append to file
-    std::string encoded = Encoder::uuencoder(contents);
+    std::stringstream encoded = Encoder::uuencoder(contents);
     Encoder::appendFile(output, encoded);
 
 	// add ending to file
-    std::string footer = "`\nend";
+    std::stringstream footer;
+    footer << "`\nend";
     Encoder::appendFile(output, footer);
 }

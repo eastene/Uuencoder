@@ -101,6 +101,8 @@ int main(int argc, char** argv)
     char* flags = "es";
     // encoder object
     Encoder encoder;
+    // decoder object
+    Decoder decoder;
 
     // check correctness of arguments
     if (argc == 2) {
@@ -151,6 +153,8 @@ int main(int argc, char** argv)
 
     if (strchr(flags, 'e')){
         encoder.encode(input, output);
+    } else if (strchr(flags, 'd')){
+        decoder.decode(input, output);
     }
 
     return 0;
