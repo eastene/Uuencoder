@@ -1,9 +1,30 @@
 #include "Encoder.h"
+#include <fstream>
+#include <iostream>
 
 // Encoder default constructor
 // @params: none
 // @return: none
 Encoder::Encoder() {};
+
+// Encoder read file to string
+// @method: reads .txt file of specified name and returns the contents as a string or throws exception if file not found
+// @params: input - file name
+// @return: contents of file as string
+std::string Encoder::readFile(std::string input) {
+	std::string contents;
+	std::string temp;
+	std::fstream reader;
+	reader.open(input.c_str(), std::ios::in);
+
+	while (!reader.eof()) {
+		std::getline(reader, temp);
+		contents += temp;
+	}
+
+	reader.close();
+	return contents;
+}
 
 // Encoder main encode
 // TODO: add exceptions if encoding fails
@@ -16,4 +37,6 @@ void Encoder::encode(std::string input, std::string output) {
 	// add header to output
 
 	// encode text line by line
+
+	// add ending to file
 }
