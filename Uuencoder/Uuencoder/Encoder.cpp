@@ -11,5 +11,9 @@ Encoder::Encoder() {};
 // @params: input - file to be encoded, output - file to write encoded text to
 // @return: none
 void Encoder::encode(std::string input, std::string output) {
+	// read in input contents first in case outputting to input file
 
+	// add header to output
+
+	// encode text line by line
 }
