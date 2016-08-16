@@ -15,14 +15,19 @@ std::string Encoder::readFile(std::string input) {
 	std::string contents;
 	std::string temp;
 	std::fstream reader;
-	reader.open(input.c_str(), std::ios::in);
+	try {
+		reader.open(input.c_str(), std::ios::in);
 
-	while (!reader.eof()) {
-		std::getline(reader, temp);
-		contents += temp;
+		while (!reader.eof()) {
+			std::getline(reader, temp);
+			contents += temp;
+		}
+		reader.close();
+
+	} catch (std::fstream::failure e){
+		std::err << "Exception manipulating file " << input << std::endl;
 	}
 
-	reader.close();
 	return contents;
 }
 
@@ -33,8 +38,10 @@ std::string Encoder::readFile(std::string input) {
 // @return: none
 void Encoder::encode(std::string input, std::string output) {
 	// read in input contents first in case outputting to input file
+	std::string contents = Encoder::readFile(input);
 
 	// add header to output
+
 
 	// encode text line by line
 

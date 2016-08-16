@@ -1,7 +1,15 @@
 // Uuencoder.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
+// Debugger mode
+#define DEBUG // comment out to turn off debug printer
+#ifdef DEBUG
+#define _DPRINT(what) std::cout << what << std::endl;
+#else
+#define _DPRINT(what)
+# endif
+
+
 #include <iostream>
 #include "Encoder.h"
 #include "Decoder.h"
@@ -19,6 +27,7 @@ void printUsageAndExit() {
 bool isValidFlag(char flag) {
 	// current flags, if more flags are added later on should look into a more effecient method for checking
 	if (flag != 's' && flag != 'e' && flag != 'p' && flag != 'd') {
+		_DPRINT("false flag");
 		return false;
 	}
 
@@ -29,9 +38,11 @@ bool isValidFlag(char flag) {
 bool containsContradictions(char* arg) {
 	// if more flags are added, should find a more effecient method
 	if (strchr(arg, 'e') != NULL && strchr(arg, 'd') != NULL) {
+		_DPRINT("contains contradiction");
 		return true;
 	}
 	if (strchr(arg, 's') != NULL && strchr(arg, 'p') != NULL) {
+		_DPRINT("contains contradiction");
 		return true;
 	}
 	else {
@@ -55,6 +66,7 @@ char* setFlagsOrExit(char* arg) {
 		}
 		else if (strchr(uniqueFlags, arg[i]) != NULL) {
 			// if a flag is repeated, exit
+			_DPRINT("repeated flag")
 			printUsageAndExit();
 		}
 		else {
@@ -67,8 +79,12 @@ char* setFlagsOrExit(char* arg) {
 
 // test a command line argument is a .txt file 
 bool isTxtFile(char* arg) {
-	if (*strstr(arg, ".txt") != strlen(arg - 5)) {
+	// find extension in string (if exists)
+	char *sub = strstr(arg, ".txt");
+	// if no .txt extension, or extension is not at the end of the filename, return false
+	if (!sub || strlen(sub) != 4) {
 		// if the argument contains .txt but does not end in .txt, return false
+		_DPRINT("invalid file")
 		return false;
 	}
 	else {
@@ -83,19 +99,18 @@ int main(int argc, char** argv)
 	std::string input, output;
 	// begin with flags set to encode and single thread
 	char* flags = "es";
+    // encoder object
+    Encoder encoder;
 	
 	// check correctness of arguments
 	if (argc == 2) {
-		if (argv[1][0] == '-') {
-			// if the 2nd argument is flags, then not enough info, exit
-			printUsageAndExit();
-		}
-		else if (isTxtFile(argv[1])) {
+		if (isTxtFile(argv[1])) {
 			// if no flags, and only 1 text file, overwrite input with encoded message
 			input = output = argv[1];
 		}
 		else {
 			// not a txt file, exit
+			_DPRINT("no file or only flags")
 			printUsageAndExit();
 		}
 	}
@@ -108,27 +123,35 @@ int main(int argc, char** argv)
 		else if (argv[1][0] == '-' && isTxtFile(argv[2])){
 			// if first argument is not txt, but 2nd is, set valid flags
 			flags = setFlagsOrExit(argv[1]);
+			input = argv[2];
 		}
 		else {
 			// if no files, or flags are out of order, exit
+			_DPRINT("no files or invalid flags")
 			printUsageAndExit();
 		}
 	}
 	else if (argc == 4) {
 		// with full args, first must be flags and 2nd and 3rd must be txt files
-		if (argv[1][0] == '-' && isTxtFile(argv[2]) && isTxtFile(argv[3])) {
+		if (argv[1][0] == '-' && isTxtFile(argv[2]) && isTxtFile(argv[3])){
 			flags = setFlagsOrExit(argv[1]);
 			input = argv[2];
 			output = argv[3];
 		}
 		else {
+			_DPRINT("arguments in wrong order, invalid flags, or no txt files")
 			printUsageAndExit();
 		}
 	}
 	else {
 		// must be used with at least 1 file argument and no more than 1 flag argument and 2 file arguments
+		_DPRINT("too many or too few arguments")
 		printUsageAndExit();
 	}
+
+    if (strchr(flags, e)){
+        encoder.encode(input, output);
+    }
 
     return 0;
 }
