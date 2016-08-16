@@ -12,7 +12,7 @@ Encoder::Encoder() {};
 // @params: input - file name
 // @return: contents of file as string
 std::string Encoder::readFile(std::string input) {
-	std::string contents;
+	std::string contents = "";
 	std::string temp;
 	std::fstream reader;
 	try {
@@ -95,14 +95,16 @@ std::string Encoder::uuencoder(std::string contents) {
         bytes[2] = (char) (((contents[i + 1] & 0b00001111) << 2) | ((contents[i + 2] & 0b11000000) >> 6)) + 32;
         bytes[3] = (char) (contents[i + 2] & 0b00111111) + 32;
         // add 4 to the total amount of bytes in the row
-        byte_count += 4;
+        byte_count += 3;
         // add bytes the the current line
         line += std::string(bytes);
 
+        // start on new line every 45 bytes
         if (byte_count % 45 == 0){
             // lines are max of 45 bytes long, which is M uuencoded
             out += "M";
             out += line;
+            out += "\n";
             // reset line
             line = "";
         }
@@ -112,9 +114,10 @@ std::string Encoder::uuencoder(std::string contents) {
         char size = (char) (byte_count % 45) + 32;
         out += size;
         out += line;
+        out += "\n";
     }
 
-    return std::string(bytes);
+    return out;
 }
 
 // Encoder main encode
