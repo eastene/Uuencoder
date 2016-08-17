@@ -60,7 +60,7 @@ char* setFlagsOrExit(char* arg) {
     }
 
     char* uniqueFlags = "";
-    for (int i = 0; i < strlen(arg); i++) {
+    for (int i = 1; i < strlen(arg); i++) {
         if (!isValidFlag(arg[i])) {
             printUsageAndExit();
         }
@@ -137,11 +137,12 @@ int main(int argc, char** argv)
         // with full args, first must be flags and 2nd and 3rd must be txt files
         if (argv[1][0] == '-' && isTxtFile(argv[2]) && isTxtFile(argv[3])){
             flags = setFlagsOrExit(argv[1]);
+            _DPRINT(flags);
             input = argv[2];
             output = argv[3];
         }
         else {
-            _DPRINT("arguments in wrong order, invalid flags, or no txt files")
+            _DPRINT("arguments in wrong order, invalid flags, or no txt files");
             printUsageAndExit();
         }
     }
@@ -151,11 +152,11 @@ int main(int argc, char** argv)
         printUsageAndExit();
     }
 
-    if (strchr(flags, 'e')){
-        encoder.encode(input, output);
-    } else if (strchr(flags, 'd')){
+    //if (strchr(flags, 'e')){
+     //   encoder.encode(input, output);
+    //} else if (strchr(flags, 'd')){
         decoder.decode(input, output);
-    }
+    //}
 
     return 0;
 }

@@ -10,9 +10,9 @@ public:
 	Decoder();
 
 	// header verifier
-	bool verifyHeader(std::string input, std::stringstream header);
+	bool verifyHeader(std::string input, std::iostream &header);
 	// decoder logic
-	std::stringstream uudecoder(std::stringstream contents);
+	void uudecoder(std::iostream &from, std::iostream &to);
 	// main decode method, throws exceptions
 	void decode(std::string input, std::string output);
 };

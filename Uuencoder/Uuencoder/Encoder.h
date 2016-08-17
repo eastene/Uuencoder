@@ -6,15 +6,15 @@
 class Encoder {
 private:
     // uuencoder logic
-    std::stringstream uuencoder(std::stringstream contents);
+    void uuencoder(std::iostream &from, std::iostream &to);
 
 protected:
     // methods inhereted by decoder intended for its use as well
 
     // read input file to string and return it or err if exception raised
-    std::stringstream readFile(std::string input);
+    void readFile(std::string input, std::iostream &contents);
     // write to file without overwriting
-    void appendFile(std::string output, std::stringstream contents);
+    void appendFile(std::string output, std::iostream &contents);
     // clear output file for writing
     void clearFile(std::string file);
 
