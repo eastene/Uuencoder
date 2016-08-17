@@ -81,57 +81,58 @@ void Encoder::clearFile(std::string file) {
 // @return: string of encoded text
 void Encoder::uuencoder(std::iostream &from, std::iostream &to) {
     // pulls 3 characters from stream at a time (3-bytes)
-    char chunk[3];
+    std::string chunk;
     // number of bytes in the line
     int byte_count = 0;
     // 4-byte encoding
-    char bytes[4];
+    std::string bytes ("    ");
     // a single encoded line
     std::string line;
 
-    // size contents to be divisible by 3 with padding 0's if necessary
-    if (from.gcount() % 3 == 1){
-        from << "0";
-    }
-    else if (from.gcount() % 3 == 2){
-        from << "00";
-    }
-
-    // total number of chars in the stream to loop through
-    from.seekp(0, std::ios::end);
-    int char_count = from.tellp();
-    _DPRINT("char_count", char_count);
-    from.seekp(0, std::ios::beg);
-
-    for (int i = 0; i < char_count - 1; i += 3){
-        _DPRINT("iterator", i);
-        from.get(chunk, 4);
-        _DPRINT("chunk", chunk);
-        // take 3 characters at a time, make 4 6-bit words and add 32 to each
-        bytes[0] = (char) ((chunk[0] & 0b11111100) >> 2) + 32;
-        bytes[1] = (char) (((chunk[0] & 0b00000011) << 4) | ((chunk[1] & 0b11110000) >> 4)) + 32;
-        bytes[2] = (char) (((chunk[1] & 0b00001111) << 2) | ((chunk[2] & 0b11000000) >> 6)) + 32;
-        bytes[3] = (char) (chunk[2] & 0b00111111) + 32;
-        // add 4 to the total amount of bytes in the row
-        byte_count += 3;
-        // add bytes the the current line
-        line += std::string(bytes);
-        _DPRINT("line", line);
-
-        // start on new line every 45 bytes
-        if (byte_count % 45 == 0){
-            // lines are max of 45 bytes long, which is M uuencoded
-            to << "M" << line << "\n";
-            // reset line
-            line = "";
+    while(getline(from, chunk)){
+        // index of current spot in chunk
+        int c = 0;
+        int c_len = chunk.length();
+        _DPRINT("chunk length", chunk.length());
+        while (c_len - c - 45 >= 0){
+            _DPRINT("writing line", c / 45);
+            to << "M";
+            for (int i = c; i < c + 45; i += 3){
+                bytes[0] = (char) ((chunk[i] & 0b11111100) >> 2) + 32;
+                bytes[1] = (char) (((chunk[i] & 0b00000011) << 4) | ((chunk[i+1] & 0b11110000) >> 4)) + 32;
+                bytes[2] = (char) (((chunk[i+1] & 0b00001111) << 2) | ((chunk[i+2] & 0b11000000) >> 6)) + 32;
+                bytes[3] = (char) (chunk[i+2] & 0b00111111) + 32;
+                
+                to << bytes;
+            }
+            to << "\n";
+            c += 45;
         }
-    }
-
-    if (byte_count % 45 != 0){
-        char size = (char) (byte_count % 45) + 32;
-        _DPRINT("size", size);
-
-        to << std::string(size + line + "\n");
+        
+        if (c_len - c > 0){
+            if ((chunk.length() - c) % 3 == 1){
+                chunk += "00";
+                c_len += 2;
+            }else if ((chunk.length() - c) % 3 == 2){
+                chunk += "0";
+                c_len += 1;
+            }
+            
+            int size = (c_len - c);
+            
+            to << (char) (size + 32);
+            for (int i = c; i < c + size; i += 3){
+                _DPRINT("iterator", i);
+                bytes[0] = (char) ((chunk[i] & 0b11111100) >> 2) + 32;
+                bytes[1] = (char) (((chunk[i] & 0b00000011) << 4) | ((chunk[i+1] & 0b11110000) >> 4)) + 32;
+                bytes[2] = (char) (((chunk[i+1] & 0b00001111) << 2) | ((chunk[i+2] & 0b11000000) >> 6)) + 32;
+                bytes[3] = (char) (chunk[i+2] & 0b00111111) + 32;
+                
+                to << bytes;
+            }
+            
+            to << "\n";
+        }
     }
 }
 
@@ -151,7 +152,7 @@ void Encoder::encode(std::string input, std::string output) {
 
 	// add header to output
     std::stringstream encoded;
-    encoded << "begin 644 " << input << "\n";
+    encoded << "begin 644 " << output << "\n";
     Encoder::appendFile(output, encoded);
 
 	// encode text and append to file

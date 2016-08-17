@@ -51,7 +51,7 @@ bool containsContradictions(char* arg) {
 }
 
 // find valid flags, or print usage and exit if too many flags, repeated flags, or contradictory flags
-char* setFlagsOrExit(char* arg) {
+std::string setFlagsOrExit(char* arg) {
     if (containsContradictions(arg)) {
         printUsageAndExit();
     }
@@ -59,12 +59,13 @@ char* setFlagsOrExit(char* arg) {
         printUsageAndExit();
     }
 
-    char* uniqueFlags = "";
+    std::string uniqueFlags;
+    
     for (int i = 1; i < strlen(arg); i++) {
         if (!isValidFlag(arg[i])) {
             printUsageAndExit();
         }
-        else if (strchr(uniqueFlags, arg[i]) != NULL) {
+        else if (strchr(uniqueFlags.c_str(), arg[i]) != NULL) {
             // if a flag is repeated, exit
             _DPRINT("repeated flag")
             printUsageAndExit();
@@ -93,22 +94,37 @@ bool isTxtFile(char* arg) {
     }
 }
 
+// run encoder/decoder with flags
+void runEncoder(std::string flags, std::string input, std::string output){
+    // encoder object
+    Encoder encoder;
+    // decoder object
+    Decoder decoder;
+    // c string of flags
+    const char* c_flags = flags.c_str();
+    
+    if (strchr(c_flags, 'e')){
+        _DPRINT("Encoding");
+        encoder.encode(input, output);
+    } else if (strchr(c_flags, 'd')){
+        _DPRINT("Decoding");
+        decoder.decode(input, output);
+    }
+}
+
 int main(int argc, char** argv)
 {
     // input and output file names
     std::string input, output;
     // begin with flags set to encode and single thread
-    char* flags = "es";
-    // encoder object
-    Encoder encoder;
-    // decoder object
-    Decoder decoder;
+    std::string flags = "es";
 
     // check correctness of arguments
     if (argc == 2) {
         if (isTxtFile(argv[1])) {
             // if no flags, and only 1 text file, overwrite input with encoded message
             input = output = argv[1];
+            runEncoder(flags, input, output);
         }
         else {
             // not a txt file, exit
@@ -121,11 +137,13 @@ int main(int argc, char** argv)
             // if first argument is txt file, then the second must be as well or exit
             input = argv[1];
             output = argv[2];
+            runEncoder(flags, input, output);
         }
         else if (argv[1][0] == '-' && isTxtFile(argv[2])){
             // if first argument is not txt, but 2nd is, set valid flags
             flags = setFlagsOrExit(argv[1]);
             input = argv[2];
+            runEncoder(flags, input, output);
         }
         else {
             // if no files, or flags are out of order, exit
@@ -137,9 +155,9 @@ int main(int argc, char** argv)
         // with full args, first must be flags and 2nd and 3rd must be txt files
         if (argv[1][0] == '-' && isTxtFile(argv[2]) && isTxtFile(argv[3])){
             flags = setFlagsOrExit(argv[1]);
-            _DPRINT(flags);
             input = argv[2];
             output = argv[3];
+            runEncoder(flags, input, output);
         }
         else {
             _DPRINT("arguments in wrong order, invalid flags, or no txt files");
@@ -151,12 +169,6 @@ int main(int argc, char** argv)
         _DPRINT("too many or too few arguments")
         printUsageAndExit();
     }
-
-    //if (strchr(flags, 'e')){
-     //   encoder.encode(input, output);
-    //} else if (strchr(flags, 'd')){
-        decoder.decode(input, output);
-    //}
 
     return 0;
 }
